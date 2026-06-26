@@ -4,7 +4,6 @@ const path = require('path');
 const db = new Database(path.join(__dirname, 'bots.db'));
 db.pragma('journal_mode = WAL');
 
-// Create tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS devices (
     device_id TEXT PRIMARY KEY,
@@ -34,5 +33,4 @@ db.exec(`
   );
 `);
 
-// Export the db object directly (better-sqlite3 is synchronous, so no promises needed)
 module.exports = db;
